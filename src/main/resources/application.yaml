@@ -1,0 +1,94 @@
+spring:
+  kafka:
+    # ## CCDAK Topic: Bootstrap Servers
+    # Exam Tip: You only need to list *some* brokers, not all.
+    # The client connects to one, requests metadata (list of all brokers/partitions),
+    # and then connects to the specific leaders.
+    bootstrap-servers: localhost:9092,localhost:9094,localhost:9096
+
+    listener:
+      # ## CCDAK Topic: Commit Strategies & Performance
+      # 'MANUAL_IMMEDIATE' commits to the broker *instantly* when you call ack.acknowledge().
+      # Exam Scenario: "How do you implement precise 'At-Least-Once' processing?"
+      # Answer: enable-auto-commit=false + Manual Ack.
+      # Warning: In a loop, this causes high network traffic (sync commit per record).
+      ack-mode: manual_immediate
+
+      # ## CCDAK Topic: Batch Processing
+      # Exam Tip: Know the signature of the listener!
+      # If type=batch, your method receives List<ConsumerRecord>, not a single record.
+      type: batch
+
+    # --------------------------------------------------------------------------
+    # CONSUMER SETTINGS
+    # --------------------------------------------------------------------------
+    consumer:
+      # ## CCDAK Topic: Consumer Groups & Scalability
+      # Exam Q: "What happens if you start a 4th consumer in a group for a topic with 3 partitions?"
+      # Answer: The 4th consumer sits idle. (Consumers <= Partitions).
+      group-id: alice-group
+
+      # ## CCDAK Topic: Serialization
+      # Exam Trap: Mismatched Serdes are a common debugging question.
+      # If Producer used LongSerializer and you use StringDeserializer here,
+      # the app crashes with a SerializationException.
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+
+      # ## CCDAK Topic: New Consumer Position
+      # Exam Scenario: "A new consumer group starts. No offsets exist. What happens?"
+      # 'earliest': Reads all historical data (High volume).
+      # 'latest': Reads only new data (Potential data loss of history).
+      auto-offset-reset: earliest
+
+      # ## CCDAK Topic: Offset Management (Crucial)
+      # This is the "Master Switch".
+      # Exam Q: "You want to ensure a message is processed before the offset is committed.
+      # Which setting is required?" -> enable.auto.commit = false.
+      enable-auto-commit: false
+
+      # ## CCDAK Topic: Rebalancing & Timeouts
+      # Exam Scenario: "Consumer is stuck in a rebalance loop. What do you tune?"
+      # If processing 500 records takes longer than max.poll.interval.ms,
+      # the broker kicks the consumer out.
+      # Fix: LOWER this number (e.g., to 50) or INCREASE max.poll.interval.ms.
+      max-poll-records: 500
+
+    # --------------------------------------------------------------------------
+    # GLOBAL PROPERTIES
+    # --------------------------------------------------------------------------
+    properties:
+      schema.registry.url: "http://localhost:8081"
+      # ## CCDAK Topic: Security Protocols
+      # Exam Q: "Which protocol provides authentication but NO encryption?"
+      # Answer: SASL_PLAINTEXT.
+      # (SASL_SSL would provide both auth + encryption).
+      security.protocol: SASL_PLAINTEXT
+
+      group.instance.id: kafka-streams-instance-1
+
+      # ## CCDAK Topic: Authentication Mechanisms
+      # Exam Tip: Know the difference between PLAIN (simple string)
+      # and SCRAM (salted hash). PLAIN is dangerous without SSL.
+      sasl.mechanism: PLAIN
+
+      # ## CCDAK Topic: JAAS Configuration
+      # Exam Syntax Check: They might ask you to spot the error.
+      # The error is usually the missing semicolon (;) at the end.
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="alice" password="alice-secret";
+
+      # ## CCDAK Topic: Network Reliability
+      # Exam: Not a major topic, but know that if requests fail,
+      # 'retries' (Producer) helps, but 'request.timeout.ms' defines when to give up.
+      request.timeout.ms: 30000
+
+      # 1. THE CLASS MAPPING (The answer to your question)
+      # Fully qualified class name of your DTO/POJO
+      spring.json.value.default.type: org.ccdak.practice.basicKafka.messaging.Payload
+
+      # 2. THE TRUST CONFIG (Mandatory Security)
+      # You must allow this package, or Jackson will block it
+      spring.json.trusted.packages: "org.ccdak.practice.basicKafka.messaging"
+server:
+  port: 8091
