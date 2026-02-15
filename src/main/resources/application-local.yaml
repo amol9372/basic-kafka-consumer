@@ -29,8 +29,8 @@ spring:
       # If Producer used LongSerializer and you use StringDeserializer here,
       # the app crashes with a SerializationException.
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      #      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
 
       # ## CCDAK Topic: New Consumer Position
       # Exam Scenario: "A new consumer group starts. No offsets exist. What happens?"
@@ -49,7 +49,7 @@ spring:
       # If processing 500 records takes longer than max.poll.interval.ms,
       # the broker kicks the consumer out.
       # Fix: LOWER this number (e.g., to 50) or INCREASE max.poll.interval.ms.
-      max-poll-records: 500
+      max-poll-records: 1
 
     # --------------------------------------------------------------------------
     # GLOBAL PROPERTIES

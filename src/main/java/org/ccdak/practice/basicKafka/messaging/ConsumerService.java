@@ -20,38 +20,50 @@ import java.util.List;
 @Slf4j
 public class ConsumerService {
 
-  //  @KafkaListener(topics = "orders", groupId = "alice-group")
-  //  public void consume(
-  //      List<ConsumerRecord<String, String>> batch,
-  //      Acknowledgment ack,
-  //      Consumer<String, String> consumer) {
+  //    @KafkaListener(topics = "orders", groupId = "alice-group")
+  //    public void consume(
+  //        List<ConsumerRecord<String, String>> batch,
+  //        Acknowledgment ack,
+  //        Consumer<String, String> consumer) {
   //
-  //    for (ConsumerRecord<String, String> record : batch) {
+  //      for (ConsumerRecord<String, String> record : batch) {
   //
-  //      // consumer.commitAsync();
+  //        // consumer.commitAsync();
   //
-  //      log.info("Going to consume record: {}, from batch", record);
-  //      process(record);
+  //        log.info("Going to consume record: {}, from batch", record);
+  //        process(record);
+  //      }
+  //      ack.acknowledge();
   //    }
-  //    ack.acknowledge();
-  //  }
 
-  //  @KafkaListener(topics = {"orders-1", "orders"}, groupId = "amol-group")
-  //  public void consume2(
-  //          List<ConsumerRecord<String, Payload>> batch,
-  //          Acknowledgment ack,
-  //          Consumer<String, Payload> consumer) {
+  //    @KafkaListener(topics = {"orders-1", "orders"}, groupId = "amol-group", concurrency = "1")
+  //    public void consume2(
+  //            List<ConsumerRecord<String, Payload>> batch,
+  //            Acknowledgment ack,
+  //            Consumer<String, Payload> consumer) {
   //
-  //    for (ConsumerRecord<String, Payload> record : batch) {
+  //      for (ConsumerRecord<String, Payload> record : batch) {
   //
   //
-  //      log.info("Going to consume record: {}, from batch", record);
-  //      // process(record);
+  //        log.info("Going to consume record: {}, from batch", record);
+  //        // process(record);
+  //      }
+  //      ack.acknowledge();
   //    }
-  //    ack.acknowledge();
-  //  }
 
-  public void process(ConsumerRecord<String, String> record) {
-    log.info("Processing record: {}", record.value());
+  @KafkaListener(
+      topics = {"orders-1"},
+      groupId = "amol-group",
+      concurrency = "1")
+  public void consume2(ConsumerRecord<String, Payload> record) {
+
+    process(record);
+  }
+
+  public void process(ConsumerRecord<String, Payload> record) {
+
+    Thread.sleep();
+
+    log.info("Processing record: \n {} \n {}", record.key(), record.value());
   }
 }
