@@ -7,4 +7,5 @@ public class Payload {
     String message;
     String test;
     String city;
+    String time;
 }

@@ -1,24 +1,23 @@
 package org.ccdak.practice.basicKafka.messaging;
 
-import com.google.common.base.Function;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.ValueMapper;
-import org.springframework.context.annotation.Bean;
+import org.ccdak.practice.basicKafka.persistance.entity.EJobQueue;
+import org.ccdak.practice.basicKafka.persistance.repository.JobQueueRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
+
+import static java.time.temporal.ChronoUnit.MINUTES;
 
 @Service
 @Slf4j
 public class ConsumerService {
+
+  @Autowired JobQueueRepository jobQueueRepository;
 
   //    @KafkaListener(topics = "orders", groupId = "alice-group")
   //    public void consume(
@@ -54,16 +53,32 @@ public class ConsumerService {
   @KafkaListener(
       topics = {"orders-1"},
       groupId = "amol-group",
-      concurrency = "1")
+      concurrency = "3")
   public void consume2(ConsumerRecord<String, Payload> record) {
 
-    process(record);
+    CompletableFuture.runAsync(() -> process(record));
   }
 
   public void process(ConsumerRecord<String, Payload> record) {
 
-    Thread.sleep();
+//    ObjectMapper mapper = new ObjectMapper();
+//    JsonNode jsonNode;
+//    try {
+//      jsonNode = mapper.readTree(record.value().toString());
+//    } catch (JsonProcessingException e) {
+//      throw new RuntimeException(e);
+//    }
 
-    log.info("Processing record: \n {} \n {}", record.key(), record.value());
+    // Mark the record as PENDING
+    EJobQueue jobQueue =
+        EJobQueue.builder()
+            //.payload(jsonNode)
+            .executionKey(record.key())
+            .leaseUntil(Instant.now().plus(10, MINUTES))
+            .createdAt(Instant.now())
+            .status(EJobQueue.JobStatus.PENDING)
+            .build();
+
+    jobQueueRepository.save(jobQueue);
   }
 }
